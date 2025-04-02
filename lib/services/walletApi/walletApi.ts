@@ -3,7 +3,7 @@
 import { ApiError, Balances, ConfirmTransactionRequest, CreateWalletRequest, DepositInfo, TransactionResult, TransactionsList, TransactionTemplate, TransactionTemplateRequest } from "./types";
 
 // Base API configuration
-const API_BASE_URL = 'http://localhost:3000/v1/waas'
+const API_BASE_URL = process.env.BASE_API_ENDPOINT ?? 'http://localhost:3000/v1/waas'
 
 // Helper function to handle API responses
 async function handleResponse<T>(response: Response): Promise<T> {
