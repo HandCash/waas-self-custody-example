@@ -1,13 +1,14 @@
-import Link from "next/link"
-import { siteConfig } from "@/config/site"
-import { buttonVariants } from "@/components/ui/button"
-import Wallet from "@/app/components/Wallet"
+import Wallet from "@/app/components/Wallet";
 import { cookies } from "next/headers";
 import { getWalletApi } from "@/lib/serviceFactory";
+import { redirect } from "next/navigation";
 
 export default async function Page() {
-  const walletApi = getWalletApi();
+  if (!cookies().has('xpub')) {
+    return redirect('/start')
+  }
 
+  const walletApi = getWalletApi();
   const [transactions, balances, depositInfo] = await Promise.all([
     walletApi.getTransactions(),
     walletApi.getBalances(),

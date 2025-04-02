@@ -17,7 +17,7 @@ export default function TransactionItem({ transaction }: TransactionProps) {
           </Avatar>
           <div>
             <div className="font-medium">{transaction.participants[0].displayName}</div>
-            <div className="text-sm text-muted-foreground">{transaction.note}</div>
+            {transaction.note && <div className="text-sm text-muted-foreground">{transaction.note}</div>}
           </div>
         </div>
         <div className="text-right">
