@@ -1,0 +1,488 @@
+openapi: 3.0.0
+info:
+  title: HandCash Wallet API
+  version: "1.0.0"
+  description: >
+    This API allows you to create self-custodial wallets, transfer funds, retrieve deposit information, and view wallet balances.
+servers:
+  - url: https://cloud.handcash.io/v1/waas
+    description: HandCash Cloud (production)
+  - url: https://iae.cloud.handcash.io/v1/waas
+    description: HandCash Cloud (development)
+  - url: http://localhost:3000/v1/waas
+    description: Local development
+
+security:
+  - AppIdAuth: []
+  - AppSecret: []
+  - WalletAuth: []
+
+paths:
+  /account/selfCustodial:
+    post:
+      summary: Create a new self-custodial wallet account
+      operationId: createWallet
+      security:
+        - AppIdAuth: []
+        - AppSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWalletRequest'
+      responses:
+        '200':
+          description: Wallet created successfully. Returns deposit information.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepositInfo'
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /wallet/pay/template:
+    post:
+      summary: Retrieve a transaction template for transferring funds
+      operationId: getTransactionTemplate
+      security:
+        - AppIdAuth: []
+        - AppSecret: []
+        - WalletAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionTemplateRequest'
+      responses:
+        '200':
+          description: Transaction template retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionTemplate'
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /wallet/pay/broadcast:
+    post:
+      summary: Confirm and broadcast a transaction
+      operationId: confirmTransaction
+      security:
+        - AppIdAuth: []
+        - AppSecret: []
+        - WalletAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmTransactionRequest'
+      responses:
+        '200':
+          description: Transaction confirmed and broadcast successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResult'
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /wallet/depositInfo:
+    get:
+      summary: Retrieve deposit information for the wallet
+      operationId: getDepositInfo
+      security:
+        - AppIdAuth: []
+        - AppSecret: []
+        - WalletAuth: []
+      responses:
+        '200':
+          description: Deposit information retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepositInfo'
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /wallet/balances:
+    get:
+      summary: Retrieve all wallet balances
+      operationId: getBalances
+      security:
+        - AppIdAuth: []
+        - AppSecret: []
+        - WalletAuth: []
+      responses:
+        '200':
+          description: Balances retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balances'
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
+  /wallet/transactions:
+    get:
+      summary: Retrieve wallet transactions history
+      operationId: getTransactions
+      security:
+        - AppIdAuth: []
+        - AppSecret: []
+        - WalletAuth: []
+      responses:
+        '200':
+          description: Transactions retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsList'
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    CreateWalletRequest:
+      type: object
+      required:
+        - walletExtendedPublicKey
+        - alias
+      properties:
+        walletExtendedPublicKey:
+          type: string
+          description: Extended public key of the wallet.
+        alias:
+          type: string
+          description: Alias for the wallet.
+    DepositInfo:
+      type: object
+      description: Deposit information returned after wallet creation or via deposit info query.
+      properties:
+        id:
+          type: string
+          description: Account id. You can use it to send money from other accounts.
+        alias:
+          type: string
+          description: Unique and User friendly handle to refer to this account. You can use it to send money from other accounts.
+        paymail:
+          type: string
+          description: You can use it transfer from other services compatible with this protocol.
+        base58Address:
+          type: string
+          description: The address to which funds should be deposited from external services.
+
+    TransactionTemplateRequest:
+      type: object
+      required:
+        - note
+        - receivers
+      properties:
+        note:
+          type: string
+          description: A note or message for the transaction.
+        receivers:
+          type: array
+          description: List of receivers for the transaction.
+          items:
+            $ref: '#/components/schemas/Receiver'
+    Receiver:
+      type: object
+      required:
+        - amount
+        - destination
+        - denominationCurrencyCode
+      properties:
+        amount:
+          type: number
+          format: double
+          description: Amount to be transferred.
+        destination:
+          type: string
+          description: Destination identifier (e.g., user idm alias, paymail or address).
+        denominationCurrencyCode:
+          type: string
+          description: Currency code (e.g., USD).
+
+    TransactionTemplate:
+      type: object
+      description: Transaction template containing required signatures and a template ID.
+      required:
+        - requiredSignatures
+        - unsignedTransactionTemplateId
+      properties:
+        unsignedTransactionTemplateId:
+          type: string
+          description: ID for the unsigned transaction template.
+        requiredSignatures:
+          type: array
+          description: Array of required signature details.
+          items:
+            $ref: '#/components/schemas/RequiredSignature'
+    RequiredSignature:
+      type: object
+      required:
+        - derivationPath
+        - signatureHash
+        - inputIndex
+      properties:
+        derivationPath:
+          type: string
+          description: Derivation path for the key to sign.
+        signatureHash:
+          type: string
+          description: Hash that needs to be signed (in hex format).
+        inputIndex:
+          type: integer
+          description: Input index associated with this signature.
+
+    ConfirmTransactionRequest:
+      type: object
+      required:
+        - unsignedTransactionTemplateId
+        - signatures
+      properties:
+        unsignedTransactionTemplateId:
+          type: string
+          description: ID of the unsigned transaction template.
+        signatures:
+          type: array
+          description: Array of signature objects.
+          items:
+            $ref: '#/components/schemas/Signature'
+    Signature:
+      type: object
+      required:
+        - inputIndex
+        - publicKey
+        - signature
+      properties:
+        inputIndex:
+          type: integer
+          description: The index of the input being signed.
+        publicKey:
+          type: string
+          description: Public key in DER format as a hex string.
+        signature:
+          type: string
+          description: Signature in DER format as a hex string.
+
+    TransactionResult:
+      type: object
+      description: >
+        Contains all the information for a completed transaction.
+      properties:
+        transactionId:
+          type: string
+          description: Unique identifier for the transaction.
+        note:
+          type: string
+          description: Note associated with the transaction.
+        type:
+          type: string
+          description: Type of the transaction.
+        time:
+          type: number
+          description: Timestamp of the transaction.
+        units:
+          type: number
+          description: Units of cryptocurrency transferred.
+        satoshiFees:
+          type: number
+          description: Transaction fees in satoshis.
+        fiatEquivalent:
+          type: object
+          description: Fiat currency equivalent details.
+          properties:
+            currencyCode:
+              type: string
+              description: Currency code (e.g., USD).
+            units:
+              type: number
+              description: Fiat amount.
+        currency:
+          $ref: '#/components/schemas/CurrencyData'
+        participants:
+          type: array
+          description: List of participants in the transaction.
+          items:
+            $ref: '#/components/schemas/TransactionParticipant'
+        attachments:
+          type: array
+          description: (Optional) Attachments related to the transaction.
+          items:
+            $ref: '#/components/schemas/Attachment'
+        app:
+          type: object
+          description: Information about the app that initiated the transaction.
+          properties:
+            name:
+              type: string
+              description: Name of the application.
+            iconUrl:
+              type: string
+              description: URL to the application's icon.
+        item:
+          type: object
+          description: (Optional) Item information associated with the transaction.
+          properties:
+            imageUrl:
+              type: string
+              description: URL of the item image.
+            name:
+              type: string
+              description: Name of the item.
+            collectionName:
+              type: string
+              description: Name of the collection.
+            origin:
+              type: string
+              description: Origin details of the item.
+            groupingValue:
+              type: string
+              description: Grouping value of the item.
+    
+    CurrencyData:
+      type: object
+      description: Details of a currency.
+      properties:
+        code:
+          type: string
+          description: Currency code (e.g., BSV, USD).
+        name:
+          type: string
+          description: Name of the currency.
+        symbol:
+          type: string
+          description: Currency symbol.
+
+    TransactionParticipant:
+      type: object
+      description: A participant in the transaction.
+      properties:
+        type:
+          type: string
+          description: The type of participant (e.g., user, adress, other).
+        user:
+          type: string
+          description: UserId represented as a string.
+        profilePictureUrl:
+          type: string
+          description: URL to the participant's profile picture.
+        displayName:
+          type: string
+          description: Display name of the participant.
+        amount:
+          type: number
+          description: Amount associated with this participant.
+        instrumentId:
+          type: string
+          description: Id of the instrument, represented as a string.
+        instrumentQuantity:
+          type: number
+          description: Quantity of the instrument.
+        tags:
+          type: array
+          items:
+            type: string
+          description: List of tags.
+
+    Attachment:
+      type: object
+      description: An attachment associated with the transaction.
+      properties:
+        value:
+          type: string
+          description: The attachment value.
+        format:
+          type: string
+          description: Format of the attachment (e.g., image, text).
+    
+    
+    Balances:
+      type: object
+      description: Object containing wallet balances.
+      properties:
+        balances:
+          type: array
+          items:
+            $ref: '#/components/schemas/Balance'
+      additionalProperties: true
+    Balance:
+      type: object
+      required:
+        - currency
+        - amount
+      properties:
+        currency:
+          type: string
+          description: Currency code (e.g., USD, BSV).
+        amount:
+          type: number
+          format: double
+          description: Balance amount.
+          
+    TransactionsList:
+      type: object
+      properties:
+        from:
+          type: number
+          description: first index in the list
+        to:
+          type: number
+          description: last index in the list
+        items:
+          $ref: '#/components/schemas/TransactionResult'
+    
+    Error:
+      type: object
+      description: Error response object.
+      properties:
+        message:
+          type: string
+          description: A descriptive error message.
+        details:
+          type: object
+
+  securitySchemes:
+    AppIdAuth:
+      type: apiKey
+      in: header
+      name: app-id
+      description: Application ID for authentication
+    AppSecret:
+      type: apiKey
+      in: header
+      name: app-secret
+      description: Application secret for authentication
+    WalletAuth:
+      type: apiKey
+      in: header
+      name: wallet-xpub
+      description: Wallet extended public key
