@@ -49,6 +49,7 @@ export class WalletClient {
       const signature = ECDSA.sign(
         new BigNumber(signatureHash, 'hex', 'le'),
         privateKey,
+        true,
       );
 
       // Get public key
