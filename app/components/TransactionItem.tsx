@@ -8,7 +8,7 @@ interface TransactionProps {
 
 export default function TransactionItem({ transaction }: TransactionProps) {
   return (
-    <a href={`https://whatsonchain.com/tx/${transaction.transactionId}`} target="_blank">
+    <a href={`https://whatsonchain.com/tx/${transaction.transactionId}`} target="_blank" rel="noreferrer">
       <div className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-800">
         <div className="flex items-center gap-3">
           <Avatar>

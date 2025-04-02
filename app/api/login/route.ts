@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { WalletApi } from '@/lib/services/walletApi/walletApi'
 
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
     // Validate the xpub format (basic check)
     if (!walletExtendedPublicKey || !walletExtendedPublicKey.startsWith('xpub')) {
-      return Response.json(
+      return NextResponse.json(
         { error: 'Invalid wallet extended public key' },
         { status: 401 }
       )
@@ -29,10 +29,10 @@ export async function GET(request: NextRequest) {
       sameSite: 'strict'
     })
 
-    return Response.json({ success: true }, { status: 200 })
+    return NextResponse.json({ success: true }, { status: 200 })
   } catch (error) {
     console.error(error);
-    return Response.json(
+    return NextResponse.json(
       { error: 'Invalid request' },
       { status: 400 }
     )
