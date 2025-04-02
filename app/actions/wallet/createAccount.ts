@@ -15,7 +15,7 @@ export async function createAccount(walletExtendedPublicKey: string): Promise<Cr
 
     await walletApi.createWallet({
       walletExtendedPublicKey,
-      alias: `wallet_${moment().millisecond.toString().slice(0, 4)}`
+      alias: `wallet_${new Date().getTime().toString().slice(6)}`
     })
 
     cookies().set('xpub', walletExtendedPublicKey)
